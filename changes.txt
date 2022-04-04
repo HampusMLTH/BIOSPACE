@@ -1,0 +1,16 @@
+yaw-> roll
+aspect-> yaw
+scatter-> scatter
+polarizer-polarization
+
+go
+SAMPLE - ROLL
+sample_angle roll_angle
+
+STAGE - YAW
+stage_angle yaw_angle
+
+LED - SCATTER
+led_angle - scatter_angle
+
+filenames

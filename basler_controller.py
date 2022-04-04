@@ -33,12 +33,15 @@ class BaslerController(object):
         self.cam.Close()
     
     def update_nodemap_value(self, field, new_value):
+        value_str = str(new_value)
+        if field == "ExposureTime":
+                    value_str = value_str + ".0" 
         file = open(self.nodefile, "r")
         new_file_contents = ""
         for line in file:
             if field in line:
-                print(field + "updated from {} to {}".format(line.split()[1], str(new_value)))
-                line = line.replace(line.split()[1], str(new_value))
+                print(field + " updated from {} to {}".format(line.split()[1], value_str))
+                line = line.replace(line.split()[1], value_str)
             new_file_contents += line
         file.close()
         file = open(self.nodefile, "w")
@@ -104,8 +107,9 @@ class BaslerController(object):
                 self.counter = self.counter + 1
                 
                 #print("putting")
-                self.queue.put(result.Array)                
-                #print("bc queue size: {}".format(self.queue.qsize()))
+                self.queue.put(result.Array)
+                if self.queue.qsize() > 9:
+                    print("bc queue size: {}".format(self.queue.qsize()))
                 # Calling AttachGrabResultBuffer creates another reference to the
                 # grab result buffer. This prevents the buffer's reuse for grabbing.
                 
@@ -168,7 +172,7 @@ class BaslerController(object):
     def move_images(self, coords):
         t_move = time.time()
         #timestr = time.strftime("%Y%m%d-%H%M%S/")
-        coord_str = "led_{}_stage_{}_sample_{}/".format(coords[0], coords[1], coords[2])
+        coord_str = "scatter_{}_yaw_{}_roll_{}/".format(coords[0], coords[1], coords[2])
         os.mkdir(self.folder_path  + coord_str)
         for i in range(self.nbr_im):
             print("moving {}".format((self.counter + i) % 9))

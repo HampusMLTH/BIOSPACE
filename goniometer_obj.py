@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 from time import sleep, strftime
 import os
-from picamera import PiCamera
+#from picamera import PiCamera
 from csv import reader,writer
 import brickpi3
 import shutil
 
 class GoniometerObject(object):
     """ class for controlling the goniometer"""
-    LED = "LED"
-    STAGE = "STAGE"
-    SAMPLE = "SAMPLE"
+    SCATTER = "SCATTER"
+    YAW = "YAW"
+    ROLL = "ROLL"
 
     def __init__(self):
         #self.pos_led = 0
@@ -24,15 +24,15 @@ class GoniometerObject(object):
         print("dab")
 
     @property
-    def led_angle(self):
+    def scatter_angle(self):
         """get led angle"""
         pos = self.BP.get_motor_encoder(self.BP.PORT_C)
         angle = pos*360/(7*8652)
         return angle
 
 
-    @led_angle.setter
-    def led_angle(self, angle):
+    @scatter_angle.setter
+    def scatter_angle(self, angle):
         """Set the led angle"""
         self.BP.set_motor_limits(self.BP.PORT_C, 100, 1440)
         pos1=round(8652*7*(angle/360))
@@ -40,20 +40,20 @@ class GoniometerObject(object):
         #sleep(abs(round(8652*7*(angle/360)/1440)+1))
 
     @property
-    def stage_angle(self):
+    def yaw_angle(self):
         """get stage angle"""
         pos = self.BP.get_motor_encoder(self.BP.PORT_A)
         angle = pos*360/2700
         return angle
 
-    @stage_angle.setter
-    def stage_angle(self, angle):
+    @yaw_angle.setter
+    def yaw_angle(self, angle):
         """Set the stage angle"""
         chk_pos = self.BP.get_motor_encoder(self.BP.PORT_A)
         self.BP.set_motor_limits(self.BP.PORT_A, 100, 100)#1440)
         pos1=round(2700*(angle/360))
-        print("pos1", pos1)
-        print(GoniometerObject.angle_2_motorpos(angle, self.STAGE))
+        #print("pos1", pos1)
+        #print(GoniometerObject.angle_2_motorpos(angle, self.STAGE))
         pos_chk=pos1+0.1
         self.BP.set_motor_position(self.BP.PORT_A, pos1)
 
@@ -69,14 +69,14 @@ class GoniometerObject(object):
         #print(self.angle_2_motorpos(angle, self.STAGE))
 
     @property
-    def sample_angle(self):
+    def roll_angle(self):
         """get sample angle"""
         pos = self.BP.get_motor_encoder(self.BP.PORT_B)
         angle = pos/2
         return angle
 
-    @sample_angle.setter
-    def sample_angle(self, angle):
+    @roll_angle.setter
+    def roll_angle(self, angle):
         """Set the sample angle"""
         self.BP.set_motor_limits(self.BP.PORT_B, 100, 100)#1440)
         pos1=angle*2
@@ -121,11 +121,11 @@ class GoniometerObject(object):
 
     def motor_status(self, motor):
         try:
-            if motor == GoniometerObject.LED:
+            if motor == GoniometerObject.SCATTER:
                 status = self.BP.get_motor_status(self.BP.PORT_C)
-            elif motor == GoniometerObject.STAGE:
+            elif motor == GoniometerObject.YAW:
                 status = self.BP.get_motor_status(self.BP.PORT_A)
-            elif motor == GoniometerObject.SAMPLE:
+            elif motor == GoniometerObject.ROLL:
                 status = self.BP.get_motor_status(self.BP.PORT_B)
             return status
         except IOError as error:
@@ -138,11 +138,11 @@ class GoniometerObject(object):
     @staticmethod
     def angle_2_motorpos(angle, motor):
         """Get the motorposition corresponding to an angle for a specific motor"""
-        if motor == GoniometerObject.LED:
+        if motor == GoniometerObject.SCATTER:
             return round(8652*7*(angle/360))
-        elif motor == GoniometerObject.STAGE:
+        elif motor == GoniometerObject.YAW:
             return round(2700*(angle/360))
-        elif motor == GoniometerObject.SAMPLE:
+        elif motor == GoniometerObject.ROLL:
             return angle*2
 
         raise ValueError("Motor is not defined in goniometer object")
