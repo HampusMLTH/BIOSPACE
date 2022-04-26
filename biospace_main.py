@@ -298,10 +298,18 @@ class StartPage(tk.Frame):
         self.controller.bc.close_camera()
     
     def move_1(self, d):
-        print("moving to scatter: {}, yaw: {},roll: {} ".format(d[0],d[1],d[2]))
-        self.go.scatter_angle = int(d[0])
-        self.go.yaw_angle = int(d[1])
-        self.go.roll_angle = int(d[2])
+        if len(d)==3
+            print("moving to scatter: {}, yaw: {},roll: {} ".format(d[0],d[1],d[2]))
+            self.go.scatter_angle = int(d[0])
+            self.go.yaw_angle = int(d[1])
+            self.go.roll_angle = int(d[2])
+        elif len(d)==4
+            print("moving to scatter: {}, yaw: {},roll: {}, polarizer {} ".format(d[0],d[1],d[2],d[3]))
+            self.go.scatter_angle = int(d[0])
+            self.go.yaw_angle = int(d[1])
+            self.go.roll_angle = int(d[2])
+            self.go.polarizer_angle = int(d[3])
+        
         self.wait_4_motors()
         
     def consumer_thread(self, stop):
@@ -325,12 +333,11 @@ class StartPage(tk.Frame):
                     
                     self.protocol_nbr_rows = len(self.protocol)
                     self.protocol_index = -1
-                if self.protocol_index == self.protocol_nbr_rows-1:
+                if self.protocol_index == self.protocol_nbr_rows-1: # done with protocol
                     self.measuring_label["text"] = ""
                     self.save_cb.set(0)
                     np.savetxt(self.controller.bc.folder_path + 'over_exposed.csv', self.controller.o_exp_px, delimiter=',',fmt='%d')
                     shutil.copy(self.protocol_filename, self.controller.bc.folder_path + 'protocol.csv')
-                    #done with protocol
                 else:
                     self.protocol_index = self.protocol_index + 1
                     self.move_1(self.protocol[self.protocol_index])
