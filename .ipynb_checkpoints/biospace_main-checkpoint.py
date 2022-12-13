@@ -20,7 +20,6 @@ import os
 import time
 import timeit
 from basler_controller import BaslerController
-#from basler_controller_mock import BaslerController
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
@@ -30,7 +29,7 @@ from queue import Queue
 from queue import Empty
 import threading
 
-#from goniometer_mock import GoniometerObject
+from goniometer_mock import GoniometerMock
 from goniometer_obj import GoniometerObject
 
 MAX_QSIZE = 99
@@ -53,14 +52,14 @@ PLOT_COLORS = [(.85,.85,.54),
                (.5,0.5,.5),
                (.1,.1,.1),]
 LED_SAVENAMES = ["background",
-                 "365nm",
-                 "405nm",
-                 "430nm",
-                 "940nm",
-                 "490nm",
-                 "525nm",
-                 "630nm",
-                 "810nm",]
+                 "365_nm",
+                 "405_nm",
+                 "430_nm",
+                 "940_nm",
+                 "490_nm",
+                 "525_nm",
+                 "630_nm",
+                 "810_nm",]
 #FIELDS = ["ExposureTimeRaw",
 #         "GainRaw",
 #          "AqcuisitionRateRaw"]
@@ -153,9 +152,7 @@ class StartPage(tk.Frame):
         #label.pack(pady=10,padx=10)
         self.controller = controller
         StartPage.class_canvas = FigureCanvasTkAgg(f, self)
-        self._calibrating = False
-        self._calibrating_iteration = 0
-        self._calibrated_background = None 
+
         self.protocol_filename = "/home/pi/Dexter/BrickPi3/Software/Python/biospace/protocol.csv"
         #"E:\measurements\protocol_test.csv"
         #r"C:\Users\Hampus\Desktop\testtest\protocol_test.csv" 
@@ -234,17 +231,11 @@ class StartPage(tk.Frame):
         ttk.Checkbutton(self, text="save images", variable=self.save_cb).grid(row=10, column=2, sticky=tk.E)
         
         
-        button_start_led_calibration = ttk.Button(self, text="start LED calibration",
-                            command=lambda: self.start_led_calibration())
-        button_start_led_calibration.grid(row=11,column=0,columnspan=2)
-        self.led_calibration_label = tk.Label(self, text="no calibration")
-        self.led_calibration_label.grid(row=11, column=3)
-
         button_start_measurement = ttk.Button(self, text="start measurement",
                             command=lambda: self.start_measurement())
-        button_start_measurement.grid(row=12,column=0,columnspan=2)
+        button_start_measurement.grid(row=11,column=0,columnspan=2)
         self.measuring_label = tk.Label(self, text="")
-        self.measuring_label.grid(row=12, column=3)
+        self.measuring_label.grid(row=11, column=3)
         # TODO: when measurement is started make sure to copy nodefile to dest..
 
         StartPage.class_canvas.draw()
@@ -261,12 +252,6 @@ class StartPage(tk.Frame):
         
         self.ani = animation.FuncAnimation(f, StartPage.draw, interval=2000)
         
-    def start_led_calibration(self):
-        print("LED calibration started\n make sure room lighting is low and static, make sure your sample is well lit by the LEDs")
-        print("If your sample is small or dark, use a white paper for the calibration")
-        self.led_calibration_label["text"] = "Calibrating"
-        # do 10 loops
-        self._calibrating = True;
 
     def start_measurement(self):
         print("test start meas")
@@ -313,12 +298,12 @@ class StartPage(tk.Frame):
         self.controller.bc.close_camera()
     
     def move_1(self, d):
-        if len(d)==3:
+        if len(d)==3
             print("moving to scatter: {}, yaw: {},roll: {} ".format(d[0],d[1],d[2]))
             self.go.scatter_angle = int(d[0])
             self.go.yaw_angle = int(d[1])
             self.go.roll_angle = int(d[2])
-        elif len(d)==4:
+        elif len(d)==4
             print("moving to scatter: {}, yaw: {},roll: {}, polarizer {} ".format(d[0],d[1],d[2],d[3]))
             self.go.scatter_angle = int(d[0])
             self.go.yaw_angle = int(d[1])
@@ -341,10 +326,10 @@ class StartPage(tk.Frame):
                 if self.protocol_nbr_rows is None:
                     print("START MEASURING")
                     self.controller.bc.copy_nodemap()
-                    self.protocol = GoniometerObject.read_csv(self.protocol_filename)
-                    self.go = GoniometerObject()
-                    #self.protocol = GoniometerMock.read_csv(self.protocol_filename)
-                    #self.go = GoniometerMock()
+                    #self.protocol = GoniometerObject.read_csv(self.protocol_filename)
+                    #self.go = GoniometerObject()
+                    self.protocol = GoniometerMock.read_csv(self.protocol_filename)
+                    self.go = GoniometerMock()
                     
                     self.protocol_nbr_rows = len(self.protocol)
                     self.protocol_index = -1
@@ -414,7 +399,7 @@ class StartPage(tk.Frame):
         dynamic_range = 4095#65520
         darkest_img_mean = sys.maxsize
         index_background = None
-
+        mean_on_LEDs = None
         i = 0
         fig_hist.clear()
         mean_values=[0]*8
@@ -424,15 +409,14 @@ class StartPage(tk.Frame):
             img_mean = np.around(image.mean(), 2)
             img_max = np.around(image.max(), 2)
             if self.display_hist_cb.get():
-                
-                if self._calibrated_background is None:
-                    plot_index = i % 9
+                plot_index = 0
+                if len(self.controller.led_background_list) == 0:
                     fig_hist.hist(image.flatten(), 32, label='LED {}'.format(i), alpha=0.8, histtype="step")
                 else:
-                    plot_index = (i - self._calibrated_background) % 9
+                    plot_index = (i - int(np.rint(np.mean(self.controller.led_background_list)))) % 9
                     fig_hist.hist(image.flatten(), 32, label=LED_SAVENAMES[plot_index], alpha=0.8, histtype="step", color=PLOT_COLORS[plot_index])
                 fig_hist.plot(img_mean, 10000, 'o', color=PLOT_COLORS[plot_index])
-            print("LED {} has a mean of: {} plot_index:{}, color:{}, MAX={}".format(i, img_mean, plot_index, LED_SAVENAMES[plot_index], img_max))
+            #print("LED {} has a mean of: {} plot_index:{}, color:{}, MAX={}".format(i, img_mean, plot_index, LED_SAVENAMES[plot_index], img_max))
             mean_values[plot_index-1]=img_mean
             max_values[plot_index-1]=img_max
             if img_max == dynamic_range:
@@ -440,12 +424,17 @@ class StartPage(tk.Frame):
             if img_mean < darkest_img_mean:
                 darkest_img_mean = img_mean
                 index_background = i
+            else:
+                if mean_on_LEDs is None:
+                    mean_on_LEDs = img_mean
+                mean_on_LEDs = (mean_on_LEDs+img_mean) / 2
             i += 1
-    
+        # ok we have dark slot
+        #mean_on_LEDs = np.around(mean_values)    
         print(LED_WAVELENGTHS[1:])
         print('mean: ', *mean_values, sep=', ')
         print('max: ', *max_values, sep=', ')
-        print("off is LED {} with mean: {} comp to {}".format(index_background, darkest_img_mean, np.mean(mean_values)))
+        print("off is LED {} with mean: {} comp to {}".format(index_background, darkest_img_mean, mean_on_LEDs))
         print('Number of overexposed pixels: {}'.format(nbr_overexp_px))
         
         
@@ -453,47 +442,18 @@ class StartPage(tk.Frame):
         if self.display_hist_cb.get():
             fig_hist.legend(bbox_to_anchor=(0,-0.2,1,0.2), loc="upper left",
                 mode="expand", borderaxespad=0, ncol=5)
-        if self._calibrating:
+        if not self.measuring_label["text"]:
             self.controller.led_background_list.append(index_background)
-            self._calibrating_iteration = self._calibrating_iteration + 1
-            led_iterations=10;
-            if self._calibrating_iteration >= led_iterations:
-                self._calibrating = False
-                self._calibrated_background = max(set(self.controller.led_background_list),key=self.controller.led_background_list.count)
-                calibration_success = 100*self.controller.led_background_list.count(self._calibrated_background)/led_iterations
-                print("led number which was dark")
-                print(*self.controller.led_background_list)
-                print("--------------------")
-                if calibration_success >= 80:
-                    self.led_calibration_label["text"] = "Calibration done, LED {}, {}%".format(
-                    self._calibrated_background, calibration_success)
-                else:
-                    self.led_calibration_label["text"] = "Calibration failed, LED {}, {}%".format(
-                    self._calibrated_background, calibration_success)
-        
-        # if not self.measuring_label["text"]:
-        #     self.controller.led_background_list.append(index_background)
-        # else: # dont change while doing measurements.. todo: make separe button to stop changing off
-        #     old_background = int(np.rint(np.median(self.controller.led_background_list)))
-        #     index_background = old_background
-        # old_background = int(np.rint(np.median(self.controller.led_background_list)))
-
-        if self._calibrated_background is None:
-            print("OBS not calibrated")
-            print(self._calibrated_background)
-        elif index_background != self._calibrated_background:
+        else: # dont change while doing measurements.. todo: make separe button to stop changing off
+            old_background = int(np.rint(np.median(self.controller.led_background_list)))
+            index_background = old_background
+        old_background = int(np.rint(np.median(self.controller.led_background_list)))
+        if index_background != old_background:
             print("------------------------------WARNING-------------------------------")
-            print("measured background LED {} is deviating from previous background {}".format(index_background, self._calibrated_background))
+            print("measured background LED {} is deviating from previous background {}".format(
+                index_background, old_background))
             print("--------------------------------------------------------------------")
-            index_background=self._calibrated_background
-
-
-
-        #     print("------------------------------WARNING-------------------------------")
-        #     print("measured background LED {} is deviating from previous background {}".format(
-        #         index_background, old_background))
-        #     print("--------------------------------------------------------------------")
-        #     index_background = old_background
+            index_background = old_background
         
         
         #calibration_coef=[1, 1, 6, 1.8, 1.1, 1.3, 60, 2, 5] # coefficients to make a flat field, 365 and 630 switched location so starting [630, 405, 430,.. 
@@ -501,7 +461,7 @@ class StartPage(tk.Frame):
         img_background =images[index_background]
         processed_img = [img_background] # this list will contain bkg and then bkg subtracted images in increasing wavelengths same order as LED_WAVELENGTHS
         for s in range(0,len(LED_WAVELENGTHS) - 1):
-            current_image = (images[(index_background + s + 1) % 9])
+            current_image = (images[(index_background + s + 1) % 9] - img_background).clip(min=0)
             current_image = (current_image.astype(float)/dynamic_range)
             #current_image = (current_image.astype(float)*calibration_coef[(index_background + s + 1) % 9]/dynamic_range).clip(max=1)
             processed_img.append(current_image)

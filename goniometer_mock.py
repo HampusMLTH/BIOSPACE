@@ -7,7 +7,7 @@ from csv import reader,writer
 import shutil
 import time
 
-class GoniometerMock(object):
+class GoniometerObject(object):
     """ class for Mocking the goniometer"""
     LED = "LED"
     STAGE = "STAGE"
