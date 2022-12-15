@@ -11,6 +11,8 @@ class GoniometerObject(object):
     SCATTER = "SCATTER"
     YAW = "YAW"
     ROLL = "ROLL"
+    POLARIZER = "POLARIZER"
+
 
     def __init__(self):
         #self.pos_led = 0
@@ -86,14 +88,14 @@ class GoniometerObject(object):
     @property
     def polarizer_angle(self):
         pos = self.BP.get_motor_encoder(self.BP.PORT_D)
-        angle = pos/3.75
+        angle = pos/4.6
         return angle
 
 
     @polarizer_angle.setter
     def polarizer_angle(self, angle):
         self.BP.set_motor_limits(self.BP.PORT_D, 100, 100)#1440)
-        self.BP.set_motor_position(self.BP.PORT_D, angle*3.75)
+        self.BP.set_motor_position(self.BP.PORT_D, angle*4.6)
 
     def init_motors(self):
         self.BP.offset_motor_encoder(self.BP.PORT_A, self.BP.get_motor_encoder(self.BP.PORT_A))
@@ -127,6 +129,8 @@ class GoniometerObject(object):
                 status = self.BP.get_motor_status(self.BP.PORT_A)
             elif motor == GoniometerObject.ROLL:
                 status = self.BP.get_motor_status(self.BP.PORT_B)
+            elif motor == GoniometerObject.POLARIZER:
+                status = self.BP.get_motor_status(self.BP.PORT_D)
             return status
         except IOError as error:
             print(error)
@@ -144,6 +148,8 @@ class GoniometerObject(object):
             return round(2700*(angle/360))
         elif motor == GoniometerObject.ROLL:
             return angle*2
+        elif motor == GoniometerObject.POLARIZER:
+            return angle*4.6
 
         raise ValueError("Motor is not defined in goniometer object")
 

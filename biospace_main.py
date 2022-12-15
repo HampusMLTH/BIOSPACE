@@ -19,8 +19,8 @@ from tkinter import filedialog
 import os
 import time
 import timeit
-from basler_controller import BaslerController
-#from basler_controller_mock import BaslerController
+#from basler_controller import BaslerController
+from basler_controller_mock import BaslerController
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
@@ -30,8 +30,8 @@ from queue import Queue
 from queue import Empty
 import threading
 
-#from goniometer_mock import GoniometerObject
-from goniometer_obj import GoniometerObject
+from goniometer_mock import GoniometerObject
+#from goniometer_obj import GoniometerObject
 
 MAX_QSIZE = 99
 LED_WAVELENGTHS = ["background",
@@ -217,7 +217,7 @@ class StartPage(tk.Frame):
         self.label_protocol_filename.grid(row=7,column=0,columnspan=3)
         
         button_nodefile = ttk.Button(self, text="choose camera param file",
-                                        command=lambda: self.folder_dialog())
+                                        command=lambda: self.nodefile_dialog())
         button_nodefile.grid(row=8,column=0,columnspan=3)
         self.label_nodefile = ttk.Label(self, text=self.controller.bc.nodefile)
         self.label_nodefile.grid(row=9,column=0,columnspan=3)
@@ -295,7 +295,7 @@ class StartPage(tk.Frame):
         self.label_protocol_filename.configure(text=self.protocol_filename)
     
     def nodefile_dialog(self):
-        self.controller.bc.nodefile = filedialog.askopenfilename(initialdir = "/", title = "Choose nodefile for camera parameters", filetype = (("PSF file","*.psf"),))
+        self.controller.bc.nodefile = filedialog.askopenfilename(initialdir = "/", title = "Choose nodefile for camera parameters")
         self.label_nodefile.configure(text=self.controller.bc.nodefile)
         
     def folder_dialog(self):
@@ -520,7 +520,11 @@ class StartPage(tk.Frame):
             pos_str=""
             if self.measuring_label["text"]:
                 pos = self.protocol[self.protocol_index]
-                pos_str = "scatter_{}_yaw_{}_roll_{}/".format(pos[0], pos[1], pos[2])
+                pos_str = ""
+                if len(pos)==3:
+                    pos_str = "scatter_{}_yaw_{}_roll_{}/".format(pos[0], pos[1], pos[2])
+                else:
+                    pos_str = "scatter_{}_yaw_{}_roll_{}_polarization_{}/".format(pos[0], pos[1], pos[2], pos[3])
                 if not os.path.isdir(self.controller.bc.folder_path + pos_str):
                     os.mkdir(self.controller.bc.folder_path + pos_str)
                 self.controller.o_exp_px = np.append(self.controller.o_exp_px,np.array([nbr_overexp_px]), axis=0)
