@@ -12,24 +12,20 @@ class GoniometerObject(object):
     YAW = "YAW"
     ROLL = "ROLL"
     POLARIZER = "POLARIZER"
-
+    SCATTER_CONVERTION = 360/(7*8652)
+    YAW_CONVERTION = 360/2700
+    ROLL_CONVERTION = 1/2
+    POLARIZER_CONVERTION = 1/4.6
 
     def __init__(self):
-        #self.pos_led = 0
-        #self.pos_stage = 0
-        #self.pos_sample = 0
-
         self.BP = brickpi3.BrickPi3()
         self.init_motors()
-
-    def test(self):
-        print("dab")
 
     @property
     def scatter_angle(self):
         """get led angle"""
         pos = self.BP.get_motor_encoder(self.BP.PORT_C)
-        angle = pos*360/(7*8652)
+        angle = pos*GoniometerObject.SCATTER_CONVERTION
         return angle
 
 
@@ -37,7 +33,7 @@ class GoniometerObject(object):
     def scatter_angle(self, angle):
         """Set the led angle"""
         self.BP.set_motor_limits(self.BP.PORT_C, 100, 1440)
-        pos1=round(8652*7*(angle/360))
+        pos1=round(angle/GoniometerObject.SCATTER_CONVERTION)
         self.BP.set_motor_position(self.BP.PORT_C, pos1)
         #sleep(abs(round(8652*7*(angle/360)/1440)+1))
 
@@ -45,7 +41,7 @@ class GoniometerObject(object):
     def yaw_angle(self):
         """get stage angle"""
         pos = self.BP.get_motor_encoder(self.BP.PORT_A)
-        angle = pos*360/2700
+        angle = pos*GoniometerObject.YAW_CONVERTION
         return angle
 
     @yaw_angle.setter
@@ -53,7 +49,7 @@ class GoniometerObject(object):
         """Set the stage angle"""
         chk_pos = self.BP.get_motor_encoder(self.BP.PORT_A)
         self.BP.set_motor_limits(self.BP.PORT_A, 100, 100)#1440)
-        pos1=round(2700*(angle/360))
+        pos1=round(angle/GoniometerObject.YAW_CONVERTION)
         #print("pos1", pos1)
         #print(GoniometerObject.angle_2_motorpos(angle, self.STAGE))
         pos_chk=pos1+0.1
@@ -64,38 +60,32 @@ class GoniometerObject(object):
             self.BP.set_motor_limits(self.BP.PORT_B, 100, 100/7.5)#1440/7.5)
             self.BP.set_motor_position(self.BP.PORT_B, pos2)
 
-        #sleep(angle*2/1440+1)
-
-        # move the motor
-        #print("moving")
-        #print(self.angle_2_motorpos(angle, self.STAGE))
-
     @property
     def roll_angle(self):
         """get sample angle"""
         pos = self.BP.get_motor_encoder(self.BP.PORT_B)
-        angle = pos/2
+        angle = pos*GoniometerObject.ROLL_CONVERTION
         return angle
 
     @roll_angle.setter
     def roll_angle(self, angle):
         """Set the sample angle"""
         self.BP.set_motor_limits(self.BP.PORT_B, 100, 100)#1440)
-        pos1=angle*2
+        pos1=angle/GoniometerObject.ROLL_CONVERTION
         self.BP.set_motor_position(self.BP.PORT_B, pos1)
         #sleep(round(2700*(angle/360))/1440+1)
 
     @property
     def polarizer_angle(self):
         pos = self.BP.get_motor_encoder(self.BP.PORT_D)
-        angle = pos/4.6
+        angle = pos*GoniometerObject.POLARIZER_CONVERTION
         return angle
 
 
     @polarizer_angle.setter
     def polarizer_angle(self, angle):
         self.BP.set_motor_limits(self.BP.PORT_D, 100, 100)#1440)
-        self.BP.set_motor_position(self.BP.PORT_D, angle*4.6)
+        self.BP.set_motor_position(self.BP.PORT_D, angle/GoniometerObject.POLARIZER_CONVERTION)
 
     def init_motors(self):
         self.BP.offset_motor_encoder(self.BP.PORT_A, self.BP.get_motor_encoder(self.BP.PORT_A))
@@ -109,7 +99,6 @@ class GoniometerObject(object):
             prev_status = self.motor_status(motor)
             sleep(0.05)
             status = self.motor_status(motor)
-            #print(status)
 
             if prev_status == status:
                 #print("SAME!")
@@ -143,13 +132,13 @@ class GoniometerObject(object):
     def angle_2_motorpos(angle, motor):
         """Get the motorposition corresponding to an angle for a specific motor"""
         if motor == GoniometerObject.SCATTER:
-            return round(8652*7*(angle/360))
+            return angle/GoniometerObject.SCATTER_CONVERTION
         elif motor == GoniometerObject.YAW:
-            return round(2700*(angle/360))
+            return angle/GoniometerObject.YAW_CONVERTION
         elif motor == GoniometerObject.ROLL:
-            return angle*2
+            return angle/GoniometerObject.ROLL_CONVERTION
         elif motor == GoniometerObject.POLARIZER:
-            return angle*4.6
+            return angle/GoniometerObject.POLARIZER_CONVERTION
 
         raise ValueError("Motor is not defined in goniometer object")
 

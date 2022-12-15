@@ -18,7 +18,7 @@ class GoniometerObject(object):
         self.pos_led = 0
         self.pos_stage = 0
         self.pos_sample = 0
-        self.pos_polarizer = 
+        self.pos_polarizer = 0
         #self.BP = brickpi3.BrickPi3()
         #self.init_motors()
         
