@@ -35,7 +35,9 @@ class BaslerController(object):
     def update_nodemap_value(self, field, new_value):
         value_str = str(new_value)
         if field == "ExposureTime":
-                    value_str = value_str + ".0" 
+                    value_str = value_str + ".0"
+        if field == "Gain\t":
+            value_str = value_str + ".00000"
         file = open(self.nodefile, "r")
         new_file_contents = ""
         for line in file:
@@ -103,7 +105,7 @@ class BaslerController(object):
         nbr_imgs_saved = 0
         while not stop():
                 
-            with self.cam.RetrieveResult(2000) as result:
+            with self.cam.RetrieveResult(4000) as result:
                 self.counter = self.counter + 1
                 
                 #print("putting")
