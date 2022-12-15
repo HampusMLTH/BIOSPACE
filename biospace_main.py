@@ -19,8 +19,8 @@ from tkinter import filedialog
 import os
 import time
 import timeit
-#from basler_controller import BaslerController
-from basler_controller_mock import BaslerController
+from basler_controller import BaslerController
+#from basler_controller_mock import BaslerController
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
@@ -30,8 +30,8 @@ from queue import Queue
 from queue import Empty
 import threading
 
-from goniometer_mock import GoniometerObject
-#from goniometer_obj import GoniometerObject
+#from goniometer_mock import GoniometerObject
+from goniometer_obj import GoniometerObject
 
 MAX_QSIZE = 99
 LED_WAVELENGTHS = ["background",
@@ -105,7 +105,7 @@ class GoniometerApp(tk.Tk):
         self.led_background_list = []
         tk.Tk.__init__(self, *args, **kwargs)
         test_folder = "/home/pi/meas"#filedialog.askdirectory(initialdir = "/", title = "Choose destination folder")
-        folder_path = test_folder + time.strftime("/%Y%m%d-%H%M%S/")
+        folder_path = test_folder + time.strftime("/%Y-%m-%d_%H%M_%S/")
         self.q = Queue(maxsize=MAX_QSIZE)
         self.bc = BaslerController(folder_path, self.q)
         self.o_exp_px=np.empty((0,8),int)
@@ -192,67 +192,86 @@ class StartPage(tk.Frame):
         self.unit_label = tk.Label(self, text="")
         self.unit_label.grid(row=2,column=2)
         
-        red_label = tk.Label(self, text="red")
-        red_label.grid(row=3, column=0)
-        self.red_LED = ttk.Combobox(self, values=LED_WAVELENGTHS, state="readonly")
-        self.red_LED.grid(row=3,column=1, columnspan=2)
-        self.red_LED.current(5)
-
-        green_label = tk.Label(self, text="green")
-        green_label.grid(row=4, column=0)
-        self.green_LED = ttk.Combobox(self, values=LED_WAVELENGTHS, state="readonly")
-        self.green_LED.grid(row=4,column=1, columnspan=2)
-        self.green_LED.current(4)
-
-        blue_label = tk.Label(self, text="blue")
-        blue_label.grid(row=5, column=0)
-        self.blue_LED = ttk.Combobox(self, values=LED_WAVELENGTHS, state="readonly")
-        self.blue_LED.grid(row=5,column=1, columnspan=2)
-        self.blue_LED.current(2)
+        
     
         button_choose_protocol = ttk.Button(self, text="choose protocol file",
                             command=lambda: self.file_dialog())
-        button_choose_protocol.grid(row=6,column=0,columnspan=3)
+        button_choose_protocol.grid(row=3,column=0,columnspan=3)
         self.label_protocol_filename = ttk.Label(self, text=self.protocol_filename)
-        self.label_protocol_filename.grid(row=7,column=0,columnspan=3)
+        self.label_protocol_filename.grid(row=4,column=0,columnspan=3)
         
         button_nodefile = ttk.Button(self, text="choose camera param file",
                                         command=lambda: self.nodefile_dialog())
-        button_nodefile.grid(row=8,column=0,columnspan=3)
+        button_nodefile.grid(row=5,column=0,columnspan=3)
         self.label_nodefile = ttk.Label(self, text=self.controller.bc.nodefile)
-        self.label_nodefile.grid(row=9,column=0,columnspan=3)
+        self.label_nodefile.grid(row=6,column=0,columnspan=3)
+
+        button_save_folder = ttk.Button(self, text="choose save directory",
+                                        command=lambda: self.folder_dialog())
+        button_save_folder.grid(row=7,column=0,columnspan=3)
+        self.label_save_folder = ttk.Label(self, text=self.controller.bc.folder_path)
+        self.label_save_folder.grid(row=8,column=0,columnspan=3)
         
+        
+        red_label = tk.Label(self, text="preview image: red band")
+        red_label.grid(row=11, column=0)
+        self.red_LED = ttk.Combobox(self, values=LED_WAVELENGTHS, state="readonly")
+        self.red_LED.grid(row=11,column=1, columnspan=2)
+        self.red_LED.current(5)
+
+        green_label = tk.Label(self, text="preview image: green band")
+        green_label.grid(row=12, column=0)
+        self.green_LED = ttk.Combobox(self, values=LED_WAVELENGTHS, state="readonly")
+        self.green_LED.grid(row=12,column=1, columnspan=2)
+        self.green_LED.current(4)
+
+        blue_label = tk.Label(self, text="preview image: blue band")
+        blue_label.grid(row=13, column=0)
+        self.blue_LED = ttk.Combobox(self, values=LED_WAVELENGTHS, state="readonly")
+        self.blue_LED.grid(row=13,column=1, columnspan=2)
+        self.blue_LED.current(2)
+
+
+        button_set_preview_gain = ttk.Button(self, text="set preview gain", command=lambda: self.set_preview_gain())#e.get()))
+        button_set_preview_gain.grid(row=14,column=0)
+        self.preview_gain_entry = tk.Entry(self)
+        self.preview_gain_entry.grid(row=14,column=1)
+        self.preview_gain_entry.insert(0, "1")
+        self.preview_gain=1;
+
+
+
         self.display_cb = tk.IntVar()
-        ttk.Checkbutton(self, text="display live image", variable=self.display_cb).grid(row=10, column=0, sticky=tk.E)
+        ttk.Checkbutton(self, text="display live image", variable=self.display_cb).grid(row=15, column=0, sticky=tk.E)
         self.display_cb.set(1)
         
         self.display_hist_cb = tk.IntVar()
-        ttk.Checkbutton(self, text="display histogram", variable=self.display_hist_cb).grid(row=10, column=1, sticky=tk.E)
+        ttk.Checkbutton(self, text="display histogram", variable=self.display_hist_cb).grid(row=15, column=1, sticky=tk.E)
         self.display_hist_cb.set(1)
         
         self.save_cb = tk.IntVar()
-        ttk.Checkbutton(self, text="save images", variable=self.save_cb).grid(row=10, column=2, sticky=tk.E)
+        ttk.Checkbutton(self, text="save images", variable=self.save_cb).grid(row=15, column=2, sticky=tk.E)
         
         
         button_start_led_calibration = ttk.Button(self, text="start LED calibration",
                             command=lambda: self.start_led_calibration())
-        button_start_led_calibration.grid(row=11,column=0,columnspan=2)
+        button_start_led_calibration.grid(row=16,column=0,columnspan=2)
         self.led_calibration_label = tk.Label(self, text="no calibration")
-        self.led_calibration_label.grid(row=11, column=3)
+        self.led_calibration_label.grid(row=16, column=3)
 
         button_start_measurement = ttk.Button(self, text="start measurement",
                             command=lambda: self.start_measurement())
-        button_start_measurement.grid(row=12,column=0,columnspan=2)
+        button_start_measurement.grid(row=17,column=0,columnspan=2)
         self.measuring_label = tk.Label(self, text="")
-        self.measuring_label.grid(row=12, column=3)
+        self.measuring_label.grid(row=17, column=3)
         # TODO: when measurement is started make sure to copy nodefile to dest..
 
         StartPage.class_canvas.draw()
-        StartPage.class_canvas.get_tk_widget().grid(row=0, rowspan=13, column=3, sticky = "se")
+        StartPage.class_canvas.get_tk_widget().grid(row=0, rowspan=18, column=3, sticky = "se")
 
         #toolbar = NavigationToolbar2Tk(StartPage.class_canvas, self)
         #toolbar.update()
-        StartPage.class_canvas._tkcanvas.grid(row=0, rowspan=13, column=3, sticky = "se", pady=0)
+        StartPage.class_canvas._tkcanvas.grid(row=0, rowspan=18, column=3, sticky = "se", pady=0)
         
         #controller.container.grid_columnconfigure(3, weight=1)
         self.grid_columnconfigure(3, weight=2)
@@ -299,8 +318,10 @@ class StartPage(tk.Frame):
         self.label_nodefile.configure(text=self.controller.bc.nodefile)
         
     def folder_dialog(self):
-        self.foldername = filedialog.askdirectory(initialdir = r"C:\Users\Hampus\Desktop\testtest\\", title = "Choose destination folder")
-        self.label_dest_folder.configure(text=self.foldername)
+        folder_parent = filedialog.askdirectory(initialdir = "/", title = "Choose destination folder")
+        self.controller.bc.folder_path = folder_parent + time.strftime("/%Y-%m-%d_%H%M_%S/")
+        self.label_save_folder.configure(text=self.controller.bc.folder_path)
+        os.mkdir(self.controller.bc.folder_path)
     
     def draw(i):
         StartPage.class_canvas.draw()
@@ -470,7 +491,8 @@ class StartPage(tk.Frame):
                 else:
                     self.led_calibration_label["text"] = "Calibration failed, LED {}, {}%".format(
                     self._calibrated_background, calibration_success)
-        
+                self._calibrating_iteration = 0
+                self.controller.led_background_list = []
         # if not self.measuring_label["text"]:
         #     self.controller.led_background_list.append(index_background)
         # else: # dont change while doing measurements.. todo: make separe button to stop changing off
@@ -512,8 +534,11 @@ class StartPage(tk.Frame):
             self.color_img[:,:,0] = processed_img[self.red_LED.current()]
             self.color_img[:,:,1] = processed_img[self.green_LED.current()]
             self.color_img[:,:,2] = processed_img[self.blue_LED.current()]
+            self.color_img = self.color_img * self.preview_gain
+            self.color_img = np.clip(self.color_img, 0, 1)
             fig_image.clear()
             fig_image.imshow(self.color_img)
+            fig_image.grid(None)
         
         if self.save_cb.get():
             import imageio
@@ -550,7 +575,16 @@ class StartPage(tk.Frame):
             self.controller.bc.update_nodemap_value(self.field_combo.get(), value)
             self.unit_label["text"] = UNITS[self.field_combo.current()]
             print("{} is updated to {}".format(self.value_entry.get(), value))
+    
+    def set_preview_gain(self):
+        try:
+            value = int(self.preview_gain_entry.get())
+        except ValueError:
+            tk.messagebox.showwarning(title="Error", message="Type a number")
+        else:
+            self.preview_gain = value
             
+            print("preview gain is updated to {}".format(self.preview_gain))        
 
     
     def get_nodemap_value(self):

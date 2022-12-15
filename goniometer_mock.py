@@ -40,7 +40,7 @@ class GoniometerObject(object):
         #sleep(abs(round(8652*7*(angle/360)/1440)+1))
         
     @property
-     def yaw_angle(self):
+    def yaw_angle(self):
         """get stage angle"""
         pos = self.pos_stage
         angle = pos*360/2700
